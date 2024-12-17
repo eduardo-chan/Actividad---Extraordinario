@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="./manifest.json" />
+    <title>CRUD de Productos</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
+
+      body {
+        background-color: #1e1e1e; 
+        color: #f4f4f4; 
+        line-height: 1.6;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      h1,
+      h2 {
+        color: #a50d0d;
+        text-shadow: 1px 1px 2px #000;
+        margin-bottom: 1rem;
+      }
+      #product-form {
+        background: #2b2b2b;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        max-width: 450px;
+        width: 100%;
+        margin-bottom: 2rem;
+      }
+
+      #product-form input {
+        width: 100%;
+        padding: 0.8rem;
+        margin: 0.5rem 0;
+        border: 1px solid #444;
+        background-color: #3a3a3a;
+        color: #f4f4f4;
+        border-radius: 6px;
+        font-size: 1rem;
+      }
+
+      #product-form input:focus {
+        border-color: #a50d0d;
+        outline: none;
+      }
+
+      button {
+        display: inline-block;
+        width: 100%;
+        background-color: #a50d0d;
+        color: white;
+        border: none;
+        padding: 0.8rem;
+        margin-top: 1rem;
+        font-size: 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s;
+      }
+
+      button:hover {
+        background-color: #860a0a;
+        transform: translateY(-3px);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 2rem;
+      }
+
+      th,
+      td {
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid #444;
+      }
+
+      th {
+        background-color: #3a3a3a;
+        color: #fff;
+        font-size: 1.1rem;
+      }
+
+      td {
+        background-color: #2b2b2b;
+        color: #f4f4f4;
+      }
+
+      td button {
+        width: auto;
+        background-color: #a50d0d;
+        margin: 0 0.5rem;
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+      }
+
+      td button.edit-btn {
+        background-color: #3498db;
+      }
+
+      td button:hover {
+        opacity: 0.9;
+      }
+
+      .offline-alert {
+        position: fixed;
+        top: 1rem;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #a50d0d;
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+        text-align: center;
+        z-index: 1000;
+        display: none;
+        animation: slideDown 0.5s ease-in-out;
+      }
+
+      @keyframes slideDown {
+        from {
+          opacity: 0;
+          transform: translate(-50%, -100%);
+        }
+        to {
+          opacity: 1;
+          transform: translate(-50%, 0);
+        }
+      }
+
+      footer {
+        margin-top: 2rem;
+        color: #aaa;
+        font-size: 0.9rem;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>CRUD de Productos</h1>
+
+    <div class="offline-alert" id="offline-alert">
+      ⚠️ No hay conexión a Internet. Cargando contenido desde la caché.
+    </div>
+
+    <form id="product-form">
+      <input type="text" id="name" placeholder="Nombre del Producto" required />
+      <input type="text" id="description" placeholder="Descripción" required />
+      <input type="number" id="price" placeholder="Precio" required />
+      <input type="number" id="quantity" placeholder="Cantidad" required />
+      <button type="submit">Agregar Producto</button>
+    </form>
+
+    <h2>Lista de Productos</h2>
+
+    <table id="product-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Precio</th>
+          <th>Cantidad</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="product-list">
+      </tbody>
+    </table>
+
+    <footer>&copy; Actividad Extra | Arroyo Palafox Jose Eduardo</footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.min.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const db = new PouchDB("productos_db");
+
+        const productForm = document.getElementById("product-form");
+        const productList = document.getElementById("product-list");
+
+        const hiddenId = document.createElement("input"); 
+        hiddenId.type = "hidden";
+        hiddenId.id = "product-id";
+        productForm.appendChild(hiddenId);
+
+        const renderProducts = async () => {
+          productList.innerHTML = "";
+          try {
+            const result = await db.allDocs({
+              include_docs: true,
+              descending: true,
+            });
+            result.rows.forEach((row) => {
+              const { _id, _rev, name, description, price, quantity } = row.doc;
+
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td><strong>${name}</strong></td>
+                <td>${description}</td>
+                <td>$${price}</td>
+                <td>${quantity}</td>
+                <td>
+                  <button class="edit-btn" onclick="editProduct('${_id}', '${_rev}', '${name}', '${description}', '${price}', '${quantity}')">Editar</button>
+                  <button onclick="deleteProduct('${_id}', '${_rev}')">Eliminar</button>
+                </td>
+              `;
+              productList.appendChild(tr);
+            });
+          } catch (error) {
+            console.error("Error al recuperar productos:", error);
+          }
+        };
+
+        productForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const id = document.getElementById("product-id").value; // ID oculto
+          const name = document.getElementById("name").value;
+          const description = document.getElementById("description").value;
+          const price = document.getElementById("price").value;
+          const quantity = document.getElementById("quantity").value;
+
+          try {
+            if (id) {
+              const product = await db.get(id);
+              await db.put({
+                _id: id,
+                _rev: product._rev,
+                name,
+                description,
+                price,
+                quantity,
+              });
+              console.log("Producto actualizado:", name);
+            } else {
+              const newProduct = {
+                _id: new Date().toISOString(),
+                name,
+                description,
+                price,
+                quantity,
+              };
+              await db.put(newProduct);
+              console.log("Producto agregado:", name);
+            }
+
+            productForm.reset();
+            document.getElementById("product-id").value = ""; 
+            renderProducts();
+          } catch (error) {
+            console.error("Error al agregar/actualizar producto:", error);
+          }
+        });
+
+        window.deleteProduct = async (id, rev) => {
+          try {
+            await db.remove(id, rev);
+            console.log("Producto eliminado:", id);
+            renderProducts();
+          } catch (error) {
+            console.error("Error al eliminar producto:", error);
+          }
+        };
+
+        window.editProduct = (id, rev, name, description, price, quantity) => {
+          document.getElementById("product-id").value = id; 
+          document.getElementById("name").value = name;
+          document.getElementById("description").value = description;
+          document.getElementById("price").value = price;
+          document.getElementById("quantity").value = quantity;
+
+          console.log("Editando producto:", id);
+        };
+
+        renderProducts();
+      });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/pouchdb@8.0.1/dist/pouchdb.min.js"></script>
+    <script>
+      function checkInternet() {
+        const offlineAlert = document.getElementById("offline-alert");
+
+        function showTemporaryMessage(message, backgroundColor = "#28a745") {
+          offlineAlert.textContent = message;
+          offlineAlert.style.backgroundColor = backgroundColor;
+          offlineAlert.style.display = "block";
+
+          setTimeout(() => {
+            offlineAlert.style.display = "none";
+          }, 3000);
+        }
+
+        window.addEventListener("offline", () => {
+          offlineAlert.textContent =
+            "⚠️ No hay conexión a Internet. Cargando contenido desde la caché.";
+          offlineAlert.style.backgroundColor = "#a50d0d";
+          offlineAlert.style.display = "block";
+        });
+
+        window.addEventListener("online", () => {
+          showTemporaryMessage(
+            "✅ Conexión restablecida. Todo está actualizado."
+          );
+        });
+
+        if (!navigator.onLine) {
+          offlineAlert.textContent =
+            "⚠️ No hay conexión a Internet. Cargando contenido desde la caché.";
+          offlineAlert.style.backgroundColor = "#a50d0d";
+          offlineAlert.style.display = "block";
+        }
+      }
+      checkInternet();
+    </script>
+  </body>
+</html>

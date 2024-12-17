@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA - Productos</title>
+  <link rel="manifest" href="/manifest.json">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #1e1e1e; 
+      color: #f4f4f4;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .container {
+      background-color: #2b2b2b;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #a50d0d;
+      margin-bottom: 1rem;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    p {
+      font-size: 1.2rem;
+      color: #ccc;
+      margin-bottom: 1.5rem;
+    }
+
+    .nav-link {
+      display: inline-block;
+      background-color: #a50d0d;
+      color: #fff;
+      text-decoration: none;
+      padding: 0.8rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+    }
+
+    .nav-link:hover {
+      background-color: #860a0a; 
+      transform: translateY(-3px); 
+    }
+
+    
+    footer {
+      margin-top: 2rem;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>PWA Productos</h1>
+    <p>con pouchdb</p>
+    <nav>
+      <a href="./productos.html" class="nav-link">ir a...</a>
+    </nav>
+  </div>
+
+  <footer>
+    &copy; Actividad Extra | Arroyo Palafox Jose Eduardo
+  </footer>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(() => {
+          console.log('Service Worker registrado con éxito.');
+        })
+        .catch(err => {
+          console.error('Error al registrar el Service Worker:', err);
+        });
+    }
+  </script>
+</body>
+</html>
